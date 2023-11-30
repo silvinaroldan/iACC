@@ -43,6 +43,7 @@
 		08927BD5268618AC009195BD /* FriendsAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08927BCB268618AC009195BD /* FriendsAPI.swift */; };
 		08927BD6268618AC009195BD /* NotImplementedViewControllers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08927BCC268618AC009195BD /* NotImplementedViewControllers.swift */; };
 		7D7180032B18C70E005466AE /* UIViewController+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D7180022B18C70E005466AE /* UIViewController+Navigation.swift */; };
+		7D95E3842B18E83300C6BEB5 /* ItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D95E3832B18E83300C6BEB5 /* ItemViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +97,7 @@
 		08927BCB268618AC009195BD /* FriendsAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsAPI.swift; sourceTree = "<group>"; };
 		08927BCC268618AC009195BD /* NotImplementedViewControllers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplementedViewControllers.swift; sourceTree = "<group>"; };
 		7D7180022B18C70E005466AE /* UIViewController+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Navigation.swift"; sourceTree = "<group>"; };
+		7D95E3832B18E83300C6BEB5 /* ItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -232,6 +234,7 @@
 				080833E1268F69C200A8099A /* ArticlesAPI.swift */,
 				08927BC22686185C009195BD /* Supporting Files */,
 				7D7180022B18C70E005466AE /* UIViewController+Navigation.swift */,
+				7D95E3832B18E83300C6BEB5 /* ItemViewModel.swift */,
 			);
 			path = iACC;
 			sourceTree = "<group>";
@@ -367,6 +370,7 @@
 				08927BD5268618AC009195BD /* FriendsAPI.swift in Sources */,
 				08927BD1268618AC009195BD /* FriendsCache.swift in Sources */,
 				080833E0268F609C00A8099A /* Helpers.swift in Sources */,
+				7D95E3842B18E83300C6BEB5 /* ItemViewModel.swift in Sources */,
 				7D7180032B18C70E005466AE /* UIViewController+Navigation.swift in Sources */,
 				08927BCD268618AC009195BD /* SegmentNavigationViewController.swift in Sources */,
 				080833E2268F69C200A8099A /* ArticlesAPI.swift in Sources */,
