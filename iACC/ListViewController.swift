@@ -87,6 +87,30 @@ class ListViewController: UITableViewController {
 			}
 		}
 	}
+    
+    private func populateTransfers(items: [Transfer]) {
+        self.items = items
+            .filter { fromSentTransfersScreen ? $0.isSender : !$0.isSender }
+            .map { transfer in
+                ItemViewModel(item: transfer, longDateStyle: longDateStyle) {
+                    self.select(item: transfer)
+                }
+            }
+    }
+    
+    private func populateFriends(items: [Friend]) {
+        self.items = items.map { friend in
+            ItemViewModel(item: friend) {
+                self.select(item: friend) }
+        }
+    }
+    
+    private func populateCards(items: [Card]) {
+        self.items = items.map { friend in
+            ItemViewModel(item: friend) {
+                self.select(item: friend) }
+        }
+    }
 	
 	private func handleAPIResult<T>(_ result: Result<[T], Error>) {
 		switch result {
@@ -96,29 +120,15 @@ class ListViewController: UITableViewController {
                     if fromFriendsScreen && User.shared?.isPremium == true {
                         (UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.save(friends)
                     }
-                    
-                    self.items = friends.map { friend in
-                        ItemViewModel(item: friend) {
-                            self.select(item: friend) }
-                    }
+                    self.populateFriends(items: friends)
             }
             
             else if let transfers = items as? [Transfer] {
-                self.items = transfers
-                    .filter { fromSentTransfersScreen ? $0.isSender : !$0.isSender }
-                    .map { transfer in
-                        ItemViewModel(item: transfer, longDateStyle: longDateStyle) {
-                            self.select(item: transfer)
-                        }
-                    }
+               populateTransfers(items: transfers)
             }
 			
             else if let cards = items as? [Card] {
-                self.items = cards.map { card in
-                    ItemViewModel(item: card) {
-                        self.select(item: card)
-                    }
-                }
+                populateCards(items: cards)
             }
             
             self.refreshControl?.endRefreshing()
@@ -136,11 +146,8 @@ class ListViewController: UITableViewController {
 				(UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.loadFriends { [weak self] result in
 					DispatchQueue.mainAsyncIfNeeded {
 						switch result {
-						case let .success(items):
-                            self?.items = items.map { friend in
-                                ItemViewModel(item: friend) {
-                                    self?.select(item: friend) }
-                            }
+						case let .success(friends):
+                            self?.populateFriends(items: friends)
                             self?.tableView.reloadData()
                             
                         case let .failure(error):
