@@ -5,20 +5,24 @@
 import UIKit
 
 class ItemViewModel {
+    typealias Action = () -> Void
     let title: String
     let subtitle: String
+    let selection: Action
     
-    init(item: Friend) {
+    init(item: Friend, selection: @escaping Action) {
         self.title = item.name
         self.subtitle = item.phone
+        self.selection = selection
     }
     
-    init(item: Card) {
+    init(item: Card, selection: @escaping Action) {
         self.title = item.number
         self.subtitle = item.holder
+        self.selection = selection
     }
     
-    init(item: Transfer, longDateStyle: Bool) {
+    init(item: Transfer, longDateStyle: Bool, selection: @escaping Action) {
         let numberFormatter = Formatters.number
         numberFormatter.numberStyle = .currency
         numberFormatter.currencyCode = item.currencyCode
@@ -36,11 +40,17 @@ class ItemViewModel {
             dateFormatter.timeStyle = .short
             self.subtitle = "Received from: \(item.sender) on \(dateFormatter.string(from: item.date))"
         }
+        
+        self.selection = selection
+    }
+    
+    func select() {
+        selection()
     }
 }
 
 class ListViewController: UITableViewController {
-	var items = [Any]()
+	var items = [ItemViewModel]()
 	
 	var retryCount = 0
 	var maxRetryCount = 0
@@ -64,14 +74,12 @@ class ListViewController: UITableViewController {
 			maxRetryCount = 2
 			
 			title = "Friends"
-			
 			navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addFriend))
 			
 		} else if fromCardsScreen {
 			shouldRetry = false
 			
 			title = "Cards"
-			
 			navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addCard))
 			
 		} else if fromSentTransfersScreen {
@@ -120,32 +128,44 @@ class ListViewController: UITableViewController {
 					self?.handleAPIResult(result)
 				}
 			}
-		} else {
-			fatalError("unknown context")
 		}
 	}
 	
 	private func handleAPIResult<T>(_ result: Result<[T], Error>) {
 		switch result {
 		case let .success(items):
-			if fromFriendsScreen && User.shared?.isPremium == true {
-				(UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.save(items as! [Friend])
-			}
-			self.retryCount = 0
+            self.retryCount = 0
+                if let friends = items as? [Friend] {
+                    if fromFriendsScreen && User.shared?.isPremium == true {
+                        (UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.save(friends)
+                    }
+                    
+                    self.items = friends.map { friend in
+                        ItemViewModel(item: friend) {
+                            self.select(item: friend) }
+                    }
+            }
+            
+            else if let transfers = items as? [Transfer] {
+                self.items = transfers
+                    .filter { fromSentTransfersScreen ? $0.isSender : !$0.isSender }
+                    .map { transfer in
+                        ItemViewModel(item: transfer, longDateStyle: longDateStyle) {
+                            self.select(item: transfer)
+                        }
+                    }
+            }
 			
-			var filteredItems = items as [Any]
-			if let transfers = items as? [Transfer] {
-				if fromSentTransfersScreen {
-					filteredItems = transfers.filter(\.isSender)
-				} else {
-					filteredItems = transfers.filter { !$0.isSender }
-				}
-			}
-			
-			self.items = filteredItems
-			self.refreshControl?.endRefreshing()
-			self.tableView.reloadData()
-			
+            else if let cards = items as? [Card] {
+                self.items = cards.map { card in
+                    ItemViewModel(item: card) {
+                        self.select(item: card)
+                    }
+                }
+            }
+            
+            self.refreshControl?.endRefreshing()
+            self.tableView.reloadData()
 		case let .failure(error):
 			if shouldRetry && retryCount < maxRetryCount {
 				retryCount += 1
@@ -155,32 +175,29 @@ class ListViewController: UITableViewController {
 			}
 			
 			retryCount = 0
-			
 			if fromFriendsScreen && User.shared?.isPremium == true {
 				(UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.loadFriends { [weak self] result in
 					DispatchQueue.mainAsyncIfNeeded {
 						switch result {
 						case let .success(items):
-							self?.items = items
-							self?.tableView.reloadData()
-							
-						case let .failure(error):
-							let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
-							alert.addAction(UIAlertAction(title: "Ok", style: .default))
-							self?.presenterVC.present(alert, animated: true)
-						}
-						self?.refreshControl?.endRefreshing()
-					}
-				}
-			} else {
-				let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
-				alert.addAction(UIAlertAction(title: "Ok", style: .default))
-				self.presenterVC.present(alert, animated: true)
-				self.refreshControl?.endRefreshing()
-			}
-		}
+                            self?.items = items.map { friend in
+                                ItemViewModel(item: friend) {
+                                    self?.select(item: friend) }
+                            }
+                            self?.tableView.reloadData()
+                            
+                        case let .failure(error):
+                            self?.showError(error)
+                        }
+                    }
+                }
+            } else {
+                showError(error)
+            }
+        }
+        self.refreshControl?.endRefreshing()
 	}
-	
+    
 	override func numberOfSections(in tableView: UITableView) -> Int {
 		1
 	}
@@ -198,54 +215,16 @@ class ListViewController: UITableViewController {
 	
 	override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 		let item = items[indexPath.row]
-		if let friend = item as? Friend {
-			let vc = FriendDetailsViewController()
-			vc.friend = friend
-			navigationController?.pushViewController(vc, animated: true)
-		} else if let card = item as? Card {
-			let vc = CardDetailsViewController()
-			vc.card = card
-			navigationController?.pushViewController(vc, animated: true)
-		} else if let transfer = item as? Transfer {
-			let vc = TransferDetailsViewController()
-			vc.transfer = transfer
-			navigationController?.pushViewController(vc, animated: true)
-		} else {
-			fatalError("unknown item: \(item)")
-		}
+        
+        item.select()
 	}
 }
 
 
 
 extension UITableViewCell {
-	func configure(_ item: Any, longDateStyle: Bool) {
-		if let friend = item as? Friend {
-			textLabel?.text = friend.name
-			detailTextLabel?.text = friend.phone
-		} else if let card = item as? Card {
-			textLabel?.text = card.number
-			detailTextLabel?.text = card.holder
-		} else if let transfer = item as? Transfer {
-			let numberFormatter = Formatters.number
-			numberFormatter.numberStyle = .currency
-			numberFormatter.currencyCode = transfer.currencyCode
-			
-			let amount = numberFormatter.string(from: transfer.amount as NSNumber)!
-			textLabel?.text = "\(amount) • \(transfer.description)"
-			
-			let dateFormatter = Formatters.date
-			if longDateStyle {
-				dateFormatter.dateStyle = .long
-				dateFormatter.timeStyle = .short
-				detailTextLabel?.text = "Sent to: \(transfer.recipient) on \(dateFormatter.string(from: transfer.date))"
-			} else {
-				dateFormatter.dateStyle = .short
-				dateFormatter.timeStyle = .short
-				detailTextLabel?.text = "Received from: \(transfer.sender) on \(dateFormatter.string(from: transfer.date))"
-			}
-		} else {
-			fatalError("unknown item: \(item)")
-		}
+	func configure(_ item: ItemViewModel, longDateStyle: Bool) {
+        textLabel?.text = item.title
+        detailTextLabel?.text = item.subtitle
 	}
 }
