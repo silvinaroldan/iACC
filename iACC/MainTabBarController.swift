@@ -91,9 +91,39 @@ class MainTabBarController: UITabBarController {
 	private func makeCardsList() -> ListViewController {
 		let vc = ListViewController()
 		vc.fromCardsScreen = true
+        vc.service = CardsAPIItemServiceAdapter(
+            api: .shared, select: { [weak vc] card in
+                vc?.select(item: card)
+            })
+        vc.shouldRetry = false
+        
+        vc.title = "Cards"
+        vc.navigationItem.rightBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .add,
+            target: vc,
+            action: #selector(addCard))
 		return vc
 	}
 	
+}
+
+struct CardsAPIItemServiceAdapter: ItemService {
+    let api: CardAPI
+    let select: (Card) -> Void
+    
+    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
+        api.loadCards { result in
+            DispatchQueue.mainAsyncIfNeeded {
+                completion(result.map { items in
+                    return items.map { card in
+                        ItemViewModel(item: card) {
+                            self.select(card)
+                        }
+                    }
+                })
+            }
+        }
+    }
 }
 
 struct FriendsAPIItemServiceAdapter: ItemService {
