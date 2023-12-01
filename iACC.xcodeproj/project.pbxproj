@@ -44,6 +44,12 @@
 		08927BD6268618AC009195BD /* NotImplementedViewControllers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08927BCC268618AC009195BD /* NotImplementedViewControllers.swift */; };
 		7D7180032B18C70E005466AE /* UIViewController+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D7180022B18C70E005466AE /* UIViewController+Navigation.swift */; };
 		7D95E3842B18E83300C6BEB5 /* ItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D95E3832B18E83300C6BEB5 /* ItemViewModel.swift */; };
+		7DC322D32B19F07F0069F99D /* SentTransfersAPIItemServiceAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC322D22B19F07F0069F99D /* SentTransfersAPIItemServiceAdapter.swift */; };
+		7DC322D52B19F0B00069F99D /* ReceivedTransfersAPIItemServiceAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC322D42B19F0B00069F99D /* ReceivedTransfersAPIItemServiceAdapter.swift */; };
+		7DC322D72B19F0E10069F99D /* FriendsAPIItemServiceAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC322D62B19F0E10069F99D /* FriendsAPIItemServiceAdapter.swift */; };
+		7DC322D92B19F1130069F99D /* FriendsCacheItemServiceAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC322D82B19F1130069F99D /* FriendsCacheItemServiceAdapter.swift */; };
+		7DC322DB2B19F1500069F99D /* ItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC322DA2B19F1500069F99D /* ItemService.swift */; };
+		7DC322DD2B19F16E0069F99D /* CardsAPIItemServiceAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC322DC2B19F16E0069F99D /* CardsAPIItemServiceAdapter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -98,6 +104,12 @@
 		08927BCC268618AC009195BD /* NotImplementedViewControllers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotImplementedViewControllers.swift; sourceTree = "<group>"; };
 		7D7180022B18C70E005466AE /* UIViewController+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Navigation.swift"; sourceTree = "<group>"; };
 		7D95E3832B18E83300C6BEB5 /* ItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemViewModel.swift; sourceTree = "<group>"; };
+		7DC322D22B19F07F0069F99D /* SentTransfersAPIItemServiceAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentTransfersAPIItemServiceAdapter.swift; sourceTree = "<group>"; };
+		7DC322D42B19F0B00069F99D /* ReceivedTransfersAPIItemServiceAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceivedTransfersAPIItemServiceAdapter.swift; sourceTree = "<group>"; };
+		7DC322D62B19F0E10069F99D /* FriendsAPIItemServiceAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsAPIItemServiceAdapter.swift; sourceTree = "<group>"; };
+		7DC322D82B19F1130069F99D /* FriendsCacheItemServiceAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsCacheItemServiceAdapter.swift; sourceTree = "<group>"; };
+		7DC322DA2B19F1500069F99D /* ItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemService.swift; sourceTree = "<group>"; };
+		7DC322DC2B19F16E0069F99D /* CardsAPIItemServiceAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardsAPIItemServiceAdapter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -219,6 +231,7 @@
 		08927B912686183A009195BD /* iACC */ = {
 			isa = PBXGroup;
 			children = (
+				7DC322DE2B19F1D70069F99D /* Adapters */,
 				08927B922686183A009195BD /* AppDelegate.swift */,
 				08927B942686183A009195BD /* SceneDelegate.swift */,
 				08040FFB268B4C1D0062A93B /* MainTabBarController.swift */,
@@ -234,6 +247,7 @@
 				080833E1268F69C200A8099A /* ArticlesAPI.swift */,
 				08927BC22686185C009195BD /* Supporting Files */,
 				7D7180022B18C70E005466AE /* UIViewController+Navigation.swift */,
+				7DC322DA2B19F1500069F99D /* ItemService.swift */,
 				7D95E3832B18E83300C6BEB5 /* ItemViewModel.swift */,
 			);
 			path = iACC;
@@ -259,6 +273,18 @@
 				08927BA02686183B009195BD /* Info.plist */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		7DC322DE2B19F1D70069F99D /* Adapters */ = {
+			isa = PBXGroup;
+			children = (
+				7DC322DC2B19F16E0069F99D /* CardsAPIItemServiceAdapter.swift */,
+				7DC322D62B19F0E10069F99D /* FriendsAPIItemServiceAdapter.swift */,
+				7DC322D82B19F1130069F99D /* FriendsCacheItemServiceAdapter.swift */,
+				7DC322D22B19F07F0069F99D /* SentTransfersAPIItemServiceAdapter.swift */,
+				7DC322D42B19F0B00069F99D /* ReceivedTransfersAPIItemServiceAdapter.swift */,
+			);
+			name = Adapters;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -362,19 +388,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7DC322D32B19F07F0069F99D /* SentTransfersAPIItemServiceAdapter.swift in Sources */,
+				7DC322D72B19F0E10069F99D /* FriendsAPIItemServiceAdapter.swift in Sources */,
 				08927B932686183A009195BD /* AppDelegate.swift in Sources */,
 				08927BCF268618AC009195BD /* ListViewController.swift in Sources */,
+				7DC322D52B19F0B00069F99D /* ReceivedTransfersAPIItemServiceAdapter.swift in Sources */,
 				08040FFC268B4C1D0062A93B /* MainTabBarController.swift in Sources */,
 				08927BD0268618AC009195BD /* CardAPI.swift in Sources */,
 				08927BD6268618AC009195BD /* NotImplementedViewControllers.swift in Sources */,
 				08927BD5268618AC009195BD /* FriendsAPI.swift in Sources */,
 				08927BD1268618AC009195BD /* FriendsCache.swift in Sources */,
 				080833E0268F609C00A8099A /* Helpers.swift in Sources */,
+				7DC322DD2B19F16E0069F99D /* CardsAPIItemServiceAdapter.swift in Sources */,
 				7D95E3842B18E83300C6BEB5 /* ItemViewModel.swift in Sources */,
 				7D7180032B18C70E005466AE /* UIViewController+Navigation.swift in Sources */,
 				08927BCD268618AC009195BD /* SegmentNavigationViewController.swift in Sources */,
 				080833E2268F69C200A8099A /* ArticlesAPI.swift in Sources */,
 				08927B952686183A009195BD /* SceneDelegate.swift in Sources */,
+				7DC322DB2B19F1500069F99D /* ItemService.swift in Sources */,
+				7DC322D92B19F1130069F99D /* FriendsCacheItemServiceAdapter.swift in Sources */,
 				08927BD2268618AC009195BD /* TransfersAPI.swift in Sources */,
 				08927BD4268618AC009195BD /* User.swift in Sources */,
 			);
