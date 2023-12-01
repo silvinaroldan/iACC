@@ -4,24 +4,9 @@
 
 import UIKit
 
-protocol ItemService {
-    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void)
-}
-
 class ListViewController: UITableViewController {
 	var items = [ItemViewModel]()
     var service: ItemService?
-	
-	var retryCount = 0
-	var maxRetryCount = 0
-	var shouldRetry = false
-	
-	var longDateStyle = false
-	
-	var fromReceivedTransfersScreen = false
-	var fromSentTransfersScreen = false
-	var fromCardsScreen = false
-	var fromFriendsScreen = false
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -43,45 +28,18 @@ class ListViewController: UITableViewController {
         service?.loadItems(completion: handleAPIResult)
     }
 	
-	private func handleAPIResult(_ result: Result<[ItemViewModel], Error>) {
-		switch result {
-		case let .success(items):
-            self.retryCount = 0
+    private func handleAPIResult(_ result: Result<[ItemViewModel], Error>) {
+        switch result {
+        case let .success(items):
             self.items = items
-            self.refreshControl?.endRefreshing()
-            self.tableView.reloadData()
+            refreshControl?.endRefreshing()
+            tableView.reloadData()
             
-		case let .failure(error):
-			if shouldRetry && retryCount < maxRetryCount {
-				retryCount += 1
-				
-				refresh()
-				return
-			}
-			
-			retryCount = 0
-			if fromFriendsScreen && User.shared?.isPremium == true {
-				(UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.loadFriends { [weak self] result in
-					DispatchQueue.mainAsyncIfNeeded {
-						switch result {
-						case let .success(friends):
-                            self?.items = friends.map { friend in
-                                ItemViewModel(item: friend) {
-                                    self?.select(item: friend) }
-                            }
-                            self?.tableView.reloadData()
-                            
-                        case let .failure(error):
-                            self?.showError(error)
-                        }
-                    }
-                }
-            } else {
-                showError(error)
-            }
+        case let .failure(error):
+            showError(error)
+            refreshControl?.endRefreshing()
         }
-        self.refreshControl?.endRefreshing()
-	}
+    }
     
 	override func numberOfSections(in tableView: UITableView) -> Int {
 		1
@@ -94,7 +52,7 @@ class ListViewController: UITableViewController {
 	override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 		let item = items[indexPath.row]
 		let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell") ?? UITableViewCell(style: .subtitle, reuseIdentifier: "ItemCell")
-		cell.configure(item, longDateStyle: longDateStyle)
+		cell.configure(item)
 		return cell
 	}
 	
@@ -108,7 +66,7 @@ class ListViewController: UITableViewController {
 
 
 extension UITableViewCell {
-	func configure(_ item: ItemViewModel, longDateStyle: Bool) {
+	func configure(_ item: ItemViewModel) {
         textLabel?.text = item.title
         detailTextLabel?.text = item.subtitle
 	}
