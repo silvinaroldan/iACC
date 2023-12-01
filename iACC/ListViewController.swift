@@ -4,10 +4,15 @@
 
 import UIKit
 
+protocol ItemService {
+    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void)
+}
+
 
 
 class ListViewController: UITableViewController {
 	var items = [ItemViewModel]()
+    var service: ItemService?
 	
 	var retryCount = 0
 	var maxRetryCount = 0
@@ -26,14 +31,7 @@ class ListViewController: UITableViewController {
 		refreshControl = UIRefreshControl()
 		refreshControl?.addTarget(self, action: #selector(refresh), for: .valueChanged)
 		
-		if fromFriendsScreen {
-			shouldRetry = true
-			maxRetryCount = 2
-			
-			title = "Friends"
-			navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addFriend))
-			
-		} else if fromCardsScreen {
+		if fromCardsScreen {
 			shouldRetry = false
 			
 			title = "Cards"
@@ -65,74 +63,52 @@ class ListViewController: UITableViewController {
 		}
 	}
 	
-	@objc private func refresh() {
-		refreshControl?.beginRefreshing()
-		if fromFriendsScreen {
-			FriendsAPI.shared.loadFriends { [weak self] result in
-				DispatchQueue.mainAsyncIfNeeded {
-					self?.handleAPIResult(result)
-				}
-			}
-		} else if fromCardsScreen {
-			CardAPI.shared.loadCards { [weak self] result in
-				DispatchQueue.mainAsyncIfNeeded {
-					self?.handleAPIResult(result)
-				}
-			}
-		} else if fromSentTransfersScreen || fromReceivedTransfersScreen {
-			TransfersAPI.shared.loadTransfers { [weak self] result in
-				DispatchQueue.mainAsyncIfNeeded {
-					self?.handleAPIResult(result)
-				}
-			}
-		}
-	}
-    
-    private func populateTransfers(items: [Transfer]) {
-        self.items = items
-            .filter { fromSentTransfersScreen ? $0.isSender : !$0.isSender }
-            .map { transfer in
-                ItemViewModel(item: transfer, longDateStyle: longDateStyle) {
-                    self.select(item: transfer)
+    @objc private func refresh() {
+        refreshControl?.beginRefreshing()
+        if fromFriendsScreen {
+            service?.loadItems(completion: handleAPIResult)
+        }
+        else if fromCardsScreen {
+            CardAPI.shared.loadCards { [weak self] result in
+                DispatchQueue.mainAsyncIfNeeded {
+                    self?.handleAPIResult(result.map { items in
+                        return items.map { card in
+                            ItemViewModel(item: card, selection: {
+                                self?.select(item: card)
+                            })
+                        }})
                 }
             }
-    }
-    
-    private func populateFriends(items: [Friend]) {
-        self.items = items.map { friend in
-            ItemViewModel(item: friend) {
-                self.select(item: friend) }
         }
-    }
-    
-    private func populateCards(items: [Card]) {
-        self.items = items.map { friend in
-            ItemViewModel(item: friend) {
-                self.select(item: friend) }
+        else if fromSentTransfersScreen || fromReceivedTransfersScreen {
+            TransfersAPI.shared.loadTransfers { [weak self] result in
+                DispatchQueue.mainAsyncIfNeeded {
+                    self?.handleAPIResult(result.map { items in
+                        return items
+                            .filter {
+                                self?.fromSentTransfersScreen ?? false ? $0.isSender : !$0.isSender
+                            }
+                            .map { transfer in
+                                ItemViewModel(
+                                    item: transfer,
+                                    longDateStyle: self?.longDateStyle ?? false,
+                                    selection: {
+                                        self?.select(item: transfer)
+                                    })
+                            }})
+                }
+            }
         }
     }
 	
-	private func handleAPIResult<T>(_ result: Result<[T], Error>) {
+	private func handleAPIResult(_ result: Result<[ItemViewModel], Error>) {
 		switch result {
 		case let .success(items):
             self.retryCount = 0
-                if let friends = items as? [Friend] {
-                    if fromFriendsScreen && User.shared?.isPremium == true {
-                        (UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.save(friends)
-                    }
-                    self.populateFriends(items: friends)
-            }
-            
-            else if let transfers = items as? [Transfer] {
-               populateTransfers(items: transfers)
-            }
-			
-            else if let cards = items as? [Card] {
-                populateCards(items: cards)
-            }
-            
+            self.items = items
             self.refreshControl?.endRefreshing()
             self.tableView.reloadData()
+            
 		case let .failure(error):
 			if shouldRetry && retryCount < maxRetryCount {
 				retryCount += 1
@@ -147,7 +123,10 @@ class ListViewController: UITableViewController {
 					DispatchQueue.mainAsyncIfNeeded {
 						switch result {
 						case let .success(friends):
-                            self?.populateFriends(items: friends)
+                            self?.items = friends.map { friend in
+                                ItemViewModel(item: friend) {
+                                    self?.select(item: friend) }
+                            }
                             self?.tableView.reloadData()
                             
                         case let .failure(error):
