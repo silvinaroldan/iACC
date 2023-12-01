@@ -8,8 +8,6 @@ protocol ItemService {
     func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void)
 }
 
-
-
 class ListViewController: UITableViewController {
 	var items = [ItemViewModel]()
     var service: ItemService?
@@ -30,23 +28,6 @@ class ListViewController: UITableViewController {
 		
 		refreshControl = UIRefreshControl()
 		refreshControl?.addTarget(self, action: #selector(refresh), for: .valueChanged)
-		
-		if fromSentTransfersScreen {
-			shouldRetry = true
-			maxRetryCount = 1
-			longDateStyle = true
-
-			navigationItem.title = "Sent"
-			navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Send", style: .done, target: self, action: #selector(sendMoney))
-
-		} else if fromReceivedTransfersScreen {
-			shouldRetry = true
-			maxRetryCount = 1
-			longDateStyle = false
-			
-			navigationItem.title = "Received"
-			navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Request", style: .done, target: self, action: #selector(requestMoney))
-		}
 	}
 	
 	override func viewDidAppear(_ animated: Bool) {
@@ -59,31 +40,7 @@ class ListViewController: UITableViewController {
 	
     @objc private func refresh() {
         refreshControl?.beginRefreshing()
-        if fromFriendsScreen {
-            service?.loadItems(completion: handleAPIResult)
-        }
-        else if fromCardsScreen {
-            service?.loadItems(completion: handleAPIResult)
-        }
-        else if fromSentTransfersScreen || fromReceivedTransfersScreen {
-            TransfersAPI.shared.loadTransfers { [weak self] result in
-                DispatchQueue.mainAsyncIfNeeded {
-                    self?.handleAPIResult(result.map { items in
-                        return items
-                            .filter {
-                                self?.fromSentTransfersScreen ?? false ? $0.isSender : !$0.isSender
-                            }
-                            .map { transfer in
-                                ItemViewModel(
-                                    item: transfer,
-                                    longDateStyle: self?.longDateStyle ?? false,
-                                    selection: {
-                                        self?.select(item: transfer)
-                                    })
-                            }})
-                }
-            }
-        }
+        service?.loadItems(completion: handleAPIResult)
     }
 	
 	private func handleAPIResult(_ result: Result<[ItemViewModel], Error>) {
