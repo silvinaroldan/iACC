@@ -217,29 +217,28 @@ class ListViewController: UITableViewController {
                                 self?.tableView.reloadData()
 
                             case let .failure(error):
-                                let alert = UIAlertController(
-                                    title: "Error",
-                                    message: error.localizedDescription,
-                                    preferredStyle: .alert
-                                )
-                                alert.addAction(UIAlertAction(title: "Ok", style: .default))
-                                self?.presenterVC.present(alert, animated: true)
+                                self?.show(error: error)
+                                self?.refreshControl?.endRefreshing()
                             }
                             self?.refreshControl?.endRefreshing()
                         }
                     }
             }
             else {
-                let alert = UIAlertController(
-                    title: "Error",
-                    message: error.localizedDescription,
-                    preferredStyle: .alert
-                )
-                alert.addAction(UIAlertAction(title: "Ok", style: .default))
-                self.presenterVC.present(alert, animated: true)
+                self.show(error: error)
                 self.refreshControl?.endRefreshing()
             }
         }
+    }
+
+    func show(error: Error) {
+        let alert = UIAlertController(
+            title: "Error",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ok", style: .default))
+        showDetailViewController(alert, sender: self)
     }
 
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -265,23 +264,35 @@ class ListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let item = items[indexPath.row]
         if let friend = item as? Friend {
-            let vc = FriendDetailsViewController()
-            vc.friend = friend
-            navigationController?.pushViewController(vc, animated: true)
+            select(friend)
         }
         else if let card = item as? Card {
-            let vc = CardDetailsViewController()
-            vc.card = card
-            navigationController?.pushViewController(vc, animated: true)
+            select(card)
         }
         else if let transfer = item as? Transfer {
-            let vc = TransferDetailsViewController()
-            vc.transfer = transfer
-            navigationController?.pushViewController(vc, animated: true)
+            select(transfer)
         }
         else {
             fatalError("unknown item: \(item)")
         }
+    }
+
+    func select(_ friend: Friend) {
+        let vc = FriendDetailsViewController()
+        vc.friend = friend
+        show(vc,sender: self)
+    }
+
+    func select(_ card: Card) {
+        let vc = CardDetailsViewController()
+        vc.card = card
+        show(vc,sender: self)
+    }
+
+    func select(_  transfer: Transfer) {
+        let vc = TransferDetailsViewController()
+        vc.transfer = transfer
+        show(vc,sender: self)
     }
 }
 
