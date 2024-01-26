@@ -8,16 +8,17 @@ struct ItemViewModel {
 
     var title: String
     let subtitle: String
+    let select: () -> Void
 
-    init(_ item: Any, longDateStyle: Bool) {
+    init(_ item: Any, longDateStyle: Bool, selection: @escaping () -> Void) {
         if let friend = item as? Friend {
-            self.init(item: friend)
+            self.init(friend: friend, selection: selection)
         }
         else if let card = item as? Card {
-            self.init(item: card)
+            self.init(card: card, selection: selection)
         }
         else if let transfer = item as? Transfer {
-            self.init(item: transfer, longDateStyle: longDateStyle)
+            self.init(transfer: transfer, longDateStyle: longDateStyle, selection: selection)
         }
         else {
             fatalError("unkwon item")
@@ -26,45 +27,48 @@ struct ItemViewModel {
 }
 
 extension ItemViewModel {
-    init(item: Friend) {
-        self.title = item.name
-        self.subtitle = item.phone
+    init(friend: Friend, selection: @escaping () -> Void) {
+        self.title = friend.name
+        self.subtitle = friend.phone
+        self.select = selection
     }
 }
 
 extension ItemViewModel {
-    init(item: Card) {
-        self.title = item.number
-        self.subtitle = item.holder
+    init(card: Card, selection: @escaping () -> Void) {
+        self.title = card.number
+        self.subtitle = card.holder
+        self.select = selection
     }
 }
 
 extension ItemViewModel {
-    init(item: Transfer, longDateStyle: Bool) {
+    init(transfer: Transfer, longDateStyle: Bool, selection: @escaping () -> Void) {
         let numberFormatter = Formatters.number
         numberFormatter.numberStyle = .currency
-        numberFormatter.currencyCode = item.currencyCode
+        numberFormatter.currencyCode = transfer.currencyCode
+        self.select = selection
 
-        let amount = numberFormatter.string(from: item.amount as NSNumber)!
-        self.title = "\(amount) • \(item.description)"
+        let amount = numberFormatter.string(from: transfer.amount as NSNumber)!
+        self.title = "\(amount) • \(transfer.description)"
 
         let dateFormatter = Formatters.date
         if longDateStyle {
             dateFormatter.dateStyle = .long
             dateFormatter.timeStyle = .short
-            self.subtitle = "Sent to: \(item.recipient) on \(dateFormatter.string(from: item.date))"
+            self.subtitle = "Sent to: \(transfer.recipient) on \(dateFormatter.string(from: transfer.date))"
         }
         else {
             dateFormatter.dateStyle = .short
             dateFormatter.timeStyle = .short
             self.subtitle =
-                "Received from: \(item.sender) on \(dateFormatter.string(from: item.date))"
+                "Received from: \(transfer.sender) on \(dateFormatter.string(from: transfer.date))"
         }
     }
 }
 
 class ListViewController: UITableViewController {
-    var items = [Any]()
+    var items = [ItemViewModel]()
 
     var retryCount = 0
     var maxRetryCount = 0
@@ -193,7 +197,24 @@ class ListViewController: UITableViewController {
                 }
             }
 
-            self.items = filteredItems
+            self.items = filteredItems.map { item in
+                ItemViewModel(item, longDateStyle: longDateStyle, selection: { [weak self] in
+
+                    if let friend = item as? Friend {
+                        self?.select(friend: friend)
+                    }
+                    else if let card = item as? Card {
+                        self?.select(card: card)
+                    }
+                    else if let transfer = item as? Transfer {
+                        self?.select(transfer: transfer)
+                    }
+                    else {
+                        fatalError("unknown item: \(item)")
+                    }
+                })
+            }
+
             self.refreshControl?.endRefreshing()
             self.tableView.reloadData()
 
@@ -213,7 +234,10 @@ class ListViewController: UITableViewController {
                         DispatchQueue.mainAsyncIfNeeded {
                             switch result {
                             case let .success(items):
-                                self?.items = items
+                                self?.items = items.map { item in
+                                    ItemViewModel(friend: item, selection: { [weak self] in
+                                        self?.select(friend: item)})
+                                }
                                 self?.tableView.reloadData()
 
                             case let .failure(error):
@@ -256,40 +280,28 @@ class ListViewController: UITableViewController {
         let cell =
             tableView.dequeueReusableCell(withIdentifier: "ItemCell")
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: "ItemCell")
-        let vm = ItemViewModel(item, longDateStyle: longDateStyle)
-        cell.configure(vm)
+        cell.configure(item)
         return cell
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let item = items[indexPath.row]
-        if let friend = item as? Friend {
-            select(friend)
-        }
-        else if let card = item as? Card {
-            select(card)
-        }
-        else if let transfer = item as? Transfer {
-            select(transfer)
-        }
-        else {
-            fatalError("unknown item: \(item)")
-        }
+        item.select()
     }
 
-    func select(_ friend: Friend) {
+    func select(friend: Friend) {
         let vc = FriendDetailsViewController()
         vc.friend = friend
         show(vc,sender: self)
     }
 
-    func select(_ card: Card) {
+    func select(card: Card) {
         let vc = CardDetailsViewController()
         vc.card = card
         show(vc,sender: self)
     }
 
-    func select(_  transfer: Transfer) {
+    func select(transfer: Transfer) {
         let vc = TransferDetailsViewController()
         vc.transfer = transfer
         show(vc,sender: self)
